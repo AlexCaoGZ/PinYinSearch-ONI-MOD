@@ -4,8 +4,6 @@ using TinyPinyin;
 using System;
 using System.Text;
 using STRINGS;
-using System.Collections.Generic;
-using System.Reflection;
 
 namespace BuildingSearch
 {
@@ -51,13 +49,7 @@ namespace BuildingSearch
             {
                 subcategoryName = Traverse.Create(typeof(PlanBuildingToggle)).Field("subcategoryName").ToString();
             }
-            catch (Exception ex) {
-                DebugUtil.LogWarningArgs(new object[]
-                {
-                "拼音搜索 subcategoryName报错",
-                ex
-            });
-            }
+            catch (Exception ex) { }
 
             __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
         }
@@ -66,29 +58,13 @@ namespace BuildingSearch
     [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
     internal class ItemSearch
     {
-        //获取TreeFilterableSideScreenRow class里面的SetArrowToggleState()
-        static MethodInfo mSetArrowToggleState = typeof(TreeFilterableSideScreenRow).GetMethod("SetArrowToggleState");
-        static FastInvokeHandler SetArrowToggleState = MethodInvoker.GetHandler(mSetArrowToggleState, true);
         public static void Postfix(ref Tag thisCategoryTag, ref string search)
         {
-            //获取rowElements和arrowToggle
-            List< TreeFilterableSideScreenElement > rowElements = Traverse.Create(typeof(TreeFilterableSideScreenRow)).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
-            MultiToggle arrowToggle = Traverse.Create(typeof(TreeFilterableSideScreenRow)).Field("arrowToggle").GetValue<MultiToggle>();
-
-            bool flag = false;
-            bool flag2 = thisCategoryTag.ProperNameStripLink().ToUpper().Contains(search.ToUpper());
-            search = search.ToUpper();
-            foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
+            DebugUtil.LogWarningArgs(new object[]
             {
-                bool flag3 = flag2 || treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink().ToUpper().Contains(search.ToUpper());
-                treeFilterableSideScreenElement.gameObject.SetActive(flag3);
-                flag = (flag || flag3);
-            }
-            //base.gameObject.SetActive(flag);
-            if (search != "" && flag && arrowToggle.CurrentState == 0)
-            {
-                SetArrowToggleState(true);
-            }
+                "给出的名字",
+                search
+        });
         }
     }
 }
