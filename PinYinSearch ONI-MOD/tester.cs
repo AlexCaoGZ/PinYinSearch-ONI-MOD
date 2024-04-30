@@ -14,8 +14,8 @@ namespace PinYinSearch_ONI_MOD
         {
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
-            string inputString = "CCX";
-            string buildingName = "haulingpoint";
+            string inputString = "POINT";
+            string buildingName = "hauling point".ToLower();
             String buildingPinYin = PinyinHelper.GetPinyin(buildingName);
             String buildingPinYinInit = null;
 
@@ -39,7 +39,7 @@ namespace PinYinSearch_ONI_MOD
                 buildingPinYinInit = buildingName;
             }
 
-            Console.WriteLine((buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString)));
+            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString));
             Console.ReadKey();
         }
         /*

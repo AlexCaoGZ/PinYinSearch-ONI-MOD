@@ -20,7 +20,7 @@ namespace PinYinSearch_ONI_MOD
             String buildingPinYinInit = null;
 
             //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
-            //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder有默认长度
+            //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
             if (buildingPinYin.Length > buildingName.Length * 2)
             {
                 //获取首字母作为快捷搜索
@@ -37,11 +37,12 @@ namespace PinYinSearch_ONI_MOD
             }
             else
             {
-                buildingPinYin = buildingName;
-                buildingPinYinInit = buildingName;
+                //英文情况，大小写各检查一次
+                buildingPinYin = buildingName.ToUpper();
+                buildingPinYinInit = buildingName.ToLower();
             }
 
-            //subcategoryName不知道是什么，可能是给mod添加的自定义建筑用的？
+            //subcategoryName不知道是什么，可能是搜索类别用的？
             //用Traverse获取了它本来的数值，应该可能大概没破坏本身的功能
             string subcategoryName = null;
             try
@@ -50,7 +51,7 @@ namespace PinYinSearch_ONI_MOD
             }
             catch (Exception ex) { }
 
-            __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || (subcategoryName != null && subcategoryName.ToString().ToUpper().Contains(inputString));
+            __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
         }
     }
 }
