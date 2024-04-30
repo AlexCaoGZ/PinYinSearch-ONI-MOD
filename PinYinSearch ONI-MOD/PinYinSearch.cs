@@ -47,7 +47,7 @@ namespace PinYinSearch_ONI_MOD
             }
             catch (Exception ex) { }
 
-            __result = (buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString)) || (subcategoryName != null && subcategoryName.ToString().ToUpper().Contains(text));
+            __result = (buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString)) || (subcategoryName != null && subcategoryName.ToString().ToUpper().Contains(inputString));
         }
     }
 }
