@@ -51,7 +51,7 @@ namespace PinYinSearch_ONI_MOD
             }
             catch (Exception ex) { }
 
-            __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
+            __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
         }
     }
 }
