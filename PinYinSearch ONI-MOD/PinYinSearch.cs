@@ -3,6 +3,7 @@ using HarmonyLib;
 using TinyPinyin;
 using System;
 using System.Text;
+using STRINGS;
 
 namespace PinYinSearch_ONI_MOD
 {
@@ -11,18 +12,9 @@ namespace PinYinSearch_ONI_MOD
     {
         public static void Postfix(ref bool __result, ref Def building)
         {
-            //科雷使用的建筑名字是"<link=\"STORAGELOCKER\">存储箱</link>"
-            //需要先把无用的部分去除，原版搜索link也能搜索到所有建筑，很抽象
-            string buildingName = building.Name;
-            StringBuilder chineseString = new StringBuilder();
-            foreach (char c in buildingName)
-            {
-                if (c >= 0x4E00 && c <= 0x9FA5)
-                {
-                    chineseString.Append(c);
-                }
-            }
-            buildingName = chineseString.ToString();
+            //科雷用了ToLower()，所以我也用了
+            //不过获取到的是中文，应该没有区别
+            string buildingName = UI.StripLinkFormatting(building.Name).ToLower();
             String buildingPinYin = PinyinHelper.GetPinyin(buildingName);
 
             //获取首字母作为快捷搜索
