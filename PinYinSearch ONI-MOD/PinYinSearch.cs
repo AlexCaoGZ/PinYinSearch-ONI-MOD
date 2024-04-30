@@ -7,7 +7,7 @@ using STRINGS;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace BuildingSearch
+namespace PinYinSearch
 {
     [HarmonyPatch(typeof(PlanBuildingToggle), "CheckBuildingPassesSearchFilter")]
     internal class BuildingSearch

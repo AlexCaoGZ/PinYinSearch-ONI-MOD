@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingSearch", "PinYinSearch ONI-MOD\BuildingSearch.csproj", "{80E04357-E27D-48E1-9825-7B8DCCE1F05D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PinYinSearch", "PinYinSearch ONI-MOD\PinYinSearch.csproj", "{80E04357-E27D-48E1-9825-7B8DCCE1F05D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
