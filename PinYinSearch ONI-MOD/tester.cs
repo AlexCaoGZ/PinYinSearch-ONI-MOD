@@ -15,20 +15,29 @@ namespace PinYinSearch_ONI_MOD
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
             string inputString = "CCX";
-            string buildingName = "hauling point";
+            string buildingName = "haulingpoint";
             String buildingPinYin = PinyinHelper.GetPinyin(buildingName);
+            String buildingPinYinInit = null;
 
-            //获取首字母作为快捷搜索
-            String[] buildingPinYinTemp = buildingPinYin.Split(' ');
-            StringBuilder buildingPinYinInitTemp = new StringBuilder();
-            foreach (string str in buildingPinYinTemp)
+            if (buildingPinYin.Length > buildingName.Length*2)
             {
-                buildingPinYinInitTemp.Append(str[0]);
-            }
-            String buildingPinYinInit = buildingPinYinInitTemp.ToString();
+                //获取首字母作为快捷搜索
+                String[] buildingPinYinTemp = buildingPinYin.Split(' ');
+                StringBuilder buildingPinYinInitTemp = new StringBuilder();
+                foreach (string str in buildingPinYinTemp)
+                {
+                    buildingPinYinInitTemp.Append(str[0]);
+                }
+                buildingPinYinInit = buildingPinYinInitTemp.ToString();
 
-            //去除拼音中的空格分隔，获取搜索输入
-            buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
+                //去除拼音中的空格分隔，获取搜索输入
+                buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
+            }
+            else
+            {
+                buildingPinYin = buildingName;
+                buildingPinYinInit = buildingName;
+            }
 
             Console.WriteLine((buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString)));
             Console.ReadKey();
