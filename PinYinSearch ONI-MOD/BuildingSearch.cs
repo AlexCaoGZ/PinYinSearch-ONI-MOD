@@ -8,7 +8,7 @@ using STRINGS;
 namespace PinYinSearch_ONI_MOD
 {
     [HarmonyPatch(typeof(PlanBuildingToggle), "CheckBuildingPassesSearchFilter")]
-    internal class PinYinSearch
+    internal class BuildingSearch
     {
         public static void Postfix(ref bool __result, ref Def building)
         {
