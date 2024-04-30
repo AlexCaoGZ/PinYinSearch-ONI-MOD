@@ -5,7 +5,7 @@ using System;
 using System.Text;
 using STRINGS;
 
-namespace PinYinSearch_ONI_MOD
+namespace BuildingSearch
 {
     [HarmonyPatch(typeof(PlanBuildingToggle), "CheckBuildingPassesSearchFilter")]
     internal class BuildingSearch
@@ -52,6 +52,19 @@ namespace PinYinSearch_ONI_MOD
             catch (Exception ex) { }
 
             __result = buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
+        }
+    }
+
+    [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
+    internal class ItemSearch
+    {
+        public static void Postfix(ref Tag thisCategoryTag, ref string search)
+        {
+            DebugUtil.LogWarningArgs(new object[]
+            {
+                "给出的名字",
+                search
+        });
         }
     }
 }
