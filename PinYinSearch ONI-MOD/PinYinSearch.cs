@@ -499,27 +499,261 @@ namespace PinYinSearch
     [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
     internal class ItemSearch
     {
+        private Dictionary<string, string[]> _elementPinYinDict = new Dictionary<string, string[]>();
 
-        public static void Postfix(TreeFilterableSideScreenRow __instance, ref Tag thisCategoryTag, ref string search)
+        public static bool Prefix(TreeFilterableSideScreenRow __instance, ref Tag thisCategoryTag, ref string search)
         {
+            //初始化字典
+            var itemSearch = new ItemSearch();
+            if (itemSearch._elementPinYinDict.Count == 0)
+            {
+                itemSearch.creatElementPinYinDict(itemSearch._elementPinYinDict);
+            }
+
+            //获取两个private的变量
             List<TreeFilterableSideScreenElement> rowElements = Traverse.Create(__instance).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
             MultiToggle arrowToggle = Traverse.Create(__instance).Field("arrowToggle").GetValue<MultiToggle>();
-
             
             bool flag = false;
             bool flag2 = thisCategoryTag.ProperNameStripLink().ToUpper().Contains(search.ToUpper());
             search = search.ToUpper();
             foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
             {
-                bool flag3 = flag2 || treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink().ToUpper().Contains(search.ToUpper());
+                bool flag3 = flag2 || itemSearch.getPinYin(itemSearch, treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink()).Contains(search.ToLower());
                 treeFilterableSideScreenElement.gameObject.SetActive(flag3);
                 flag = (flag || flag3);
             }
-            //Traverse.Create("base").Method("SetActive", flag).GetValue(thisCategoryTag);
+            __instance.gameObject.SetActive(flag);
             if (search != "" && flag && arrowToggle.CurrentState == 0)
             {
                 __instance.SetArrowToggleState(true);
             }
+            return false;
+        }
+        private string getPinYin(ItemSearch itemSearch, string elementName)
+        {
+
+            String elementPinYin = null;
+            bool inDict = false;
+
+            //检查字典
+            for (int i = 0; i < itemSearch._elementPinYinDict.Count; i++)
+            {
+                KeyValuePair<string, string[]> keyValue = itemSearch._elementPinYinDict.ElementAt(i);
+                if (keyValue.Key == elementName)
+                {
+                    inDict = true;
+                    elementPinYin = elementName + keyValue.Value[0] + keyValue.Value[1];
+                    break;
+                }
+            }
+            if (!inDict)
+            {
+                //生成拼音
+                elementPinYin = PinyinHelper.GetPinyin(elementName).ToLower();
+                //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
+                //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
+                if (elementPinYin.Length > elementName.Length * 2)
+                {
+                    //获取首字母作为快捷搜索
+                    String[] elementPinYinTemp = elementPinYin.Split(' ');
+                    StringBuilder elementPinYinInitTemp = new StringBuilder(64);
+                    foreach (string str in elementPinYinTemp)
+                    {
+                        elementPinYinInitTemp.Append(str[0]);
+                    }
+                    elementPinYin = elementPinYin + elementPinYinInitTemp.ToString();
+
+                    //去除拼音中的空格分隔，获取搜索输入
+                    elementPinYin = elementPinYin.Replace(" ", "");
+                }
+                else
+                {
+                    elementPinYin = elementName.ToLower();
+                }
+            }
+            return elementPinYin;
+        }
+
+        //Ah, here we go again.
+        private Dictionary<string, string[]> creatElementPinYinDict(Dictionary<string, string[]> Dict)
+        {
+            Dict.Add("气凝胶", new string[2] { "qiningjiao", "qnj" });
+            Dict.Add("藻类", new string[2] { "zaolei", "zl" });
+            Dict.Add("铝", new string[2] { "lv", "l" });
+            Dict.Add("气态铝", new string[2] { "qitailv", "qtl" });
+            Dict.Add("铝矿", new string[2] { "lvkuang", "lk" });
+            Dict.Add("沥青", new string[2] { "liqing", "lq" });
+            Dict.Add("漂白石", new string[2] { "piaobaishi", "pbs" });
+            Dict.Add("瓶装水", new string[2] { "pingzhuangshui", "pzs" });
+            Dict.Add("砖料", new string[2] { "zhuanliao", "zl" });
+            Dict.Add("浓盐水", new string[2] { "nongyanshui", "nys" });
+            Dict.Add("浓盐冰", new string[2] { "nongyanbing", "nyb" });
+            Dict.Add("煤炭", new string[2] { "meitan", "mt" });
+            Dict.Add("二氧化碳", new string[2] { "eryanghuatan", "eyht" });
+            Dict.Add("碳纤维", new string[2] { "tanxianwei", "txw" });
+            Dict.Add("气态碳", new string[2] { "qitaitan", "qtt" });
+            Dict.Add("水泥", new string[2] { "shuini", "sn" });
+            Dict.Add("水泥混合料", new string[2] { "shuinihunheliao", "snhhl" });
+            Dict.Add("陶瓷", new string[2] { "taoci", "tc" });
+            Dict.Add("液态氯", new string[2] { "yetailv", "ytl" });
+            Dict.Add("氯气", new string[2] { "lvqi", "lq" });
+            Dict.Add("粘土", new string[2] { "niantu", "nt" });
+            Dict.Add("钴", new string[2] { "gu", "g" });
+            Dict.Add("气态钴", new string[2] { "qitaigu", "qtg" });
+            Dict.Add("钴矿", new string[2] { "gukuang", "gk" });
+            Dict.Add("复合物", new string[2] { "fuhewu", "fhw" });
+            Dict.Add("污染氧", new string[2] { "wuranyang", "wry" });
+            Dict.Add("铜", new string[2] { "tong", "t" });
+            Dict.Add("气态铜", new string[2] { "qitaitong", "qtt" });
+            Dict.Add("堆芯熔融物", new string[2] { "duixinrongrongwu", "dxrrw" });
+            Dict.Add("遗传生物软泥", new string[2] { "yichuanshengwuruanni", "ycswrn" });
+            Dict.Add("原油", new string[2] { "yuanyou", "yy" });
+            Dict.Add("碎冰", new string[2] { "suibing", "sb" });
+            Dict.Add("碎岩", new string[2] { "suiyan", "sy" });
+            Dict.Add("铜矿", new string[2] { "tongkuang", "tk" });
+            Dict.Add("贫铀", new string[2] { "pinyou", "py" });
+            Dict.Add("钻石", new string[2] { "zuanshi", "zs" });
+            Dict.Add("泥土", new string[2] { "nitu", "nt" });
+            Dict.Add("污染冰", new string[2] { "wuranbing", "wrb" });
+            Dict.Add("污染水", new string[2] { "wuranshui", "wrs" });
+            Dict.Add("银金矿", new string[2] { "yinjinkuang", "yjk" });
+            Dict.Add("浓缩铀", new string[2] { "nongsuoyou", "nsy" });
+            Dict.Add("乙醇", new string[2] { "yichun", "yc" });
+            Dict.Add("气态乙醇", new string[2] { "qitaiyichun", "qtyc" });
+            Dict.Add("核尘埃", new string[2] { "hechenai", "hca" });
+            Dict.Add("肥料", new string[2] { "feiliao", "fl" });
+            Dict.Add("黄铁矿", new string[2] { "huangtiekuang", "htk" });
+            Dict.Add("化石", new string[2] { "huashi", "hs" });
+            Dict.Add("富勒烯", new string[2] { "fuleixi", "flx" });
+            Dict.Add("玻璃", new string[2] { "boli", "bl" });
+            Dict.Add("金", new string[2] { "jin", "j" });
+            Dict.Add("金汞齐", new string[2] { "jingongqi", "jgq" });
+            Dict.Add("气态金", new string[2] { "qitaijin", "qtj" });
+            Dict.Add("花岗岩", new string[2] { "huagangyan", "hgy" });
+            Dict.Add("石墨", new string[2] { "shimo", "sm" });
+            Dict.Add("塑料质", new string[2] { "suliaozhi", "slz" });
+            Dict.Add("氦气", new string[2] { "haiqi", "hq" });
+            Dict.Add("氢气", new string[2] { "qingqi", "qq" });
+            Dict.Add("冰", new string[2] { "bing", "b" });
+            Dict.Add("火成岩", new string[2] { "huochengyan", "hcy" });
+            Dict.Add("铁", new string[2] { "tie", "t" });
+            Dict.Add("气态铁", new string[2] { "qitaitie", "qtt" });
+            Dict.Add("铁矿", new string[2] { "tiekuang", "tk" });
+            Dict.Add("异构树脂", new string[2] { "yigoushuzhi", "ygsz" });
+            Dict.Add("深渊晶石", new string[2] { "shenyuanjingshi", "syjs" });
+            Dict.Add("铅", new string[2] { "qian", "q" });
+            Dict.Add("气态铅", new string[2] { "qitaiqian", "qtq" });
+            Dict.Add("石灰", new string[2] { "shihui", "sh" });
+            Dict.Add("液态二氧化碳", new string[2] { "yetaieryanghuatan", "yteyht" });
+            Dict.Add("液态氦", new string[2] { "yetaihai", "yth" });
+            Dict.Add("液态氢", new string[2] { "yetaiqing", "ytq" });
+            Dict.Add("液态甲烷", new string[2] { "yetaijiawan", "ytjw" });
+            Dict.Add("液态氧", new string[2] { "yetaiyang", "yty" });
+            Dict.Add("液态磷", new string[2] { "yetailin", "ytl" });
+            Dict.Add("液态丙烷", new string[2] { "yetaibingwan", "ytbw" });
+            Dict.Add("液态硫", new string[2] { "yetailiu", "ytl" });
+            Dict.Add("镁铁质岩", new string[2] { "meitiezhiyan", "mtzy" });
+            Dict.Add("岩浆", new string[2] { "yanjiang", "yj" });
+            Dict.Add("汞", new string[2] { "gong", "g" });
+            Dict.Add("汞蒸气", new string[2] { "gongzhengqi", "gzq" });
+            Dict.Add("天然气", new string[2] { "tianranqi", "trq" });
+            Dict.Add("咸乳", new string[2] { "xianru", "xr" });
+            Dict.Add("咸乳蜡", new string[2] { "xianrula", "xrl" });
+            Dict.Add("凝冻咸乳", new string[2] { "ningdongxianru", "ndxr" });
+            Dict.Add("熔融铝", new string[2] { "rongronglv", "rrl" });
+            Dict.Add("熔融碳", new string[2] { "rongrongtan", "rrt" });
+            Dict.Add("熔融钴", new string[2] { "rongronggu", "rrg" });
+            Dict.Add("熔融铜", new string[2] { "rongrongtong", "rrt" });
+            Dict.Add("熔融玻璃", new string[2] { "rongrongboli", "rrbl" });
+            Dict.Add("熔融金", new string[2] { "rongrongjin", "rrj" });
+            Dict.Add("熔融铁", new string[2] { "rongrongtie", "rrt" });
+            Dict.Add("熔融铅", new string[2] { "rongrongqian", "rrq" });
+            Dict.Add("熔融铌", new string[2] { "rongrongni", "rrn" });
+            Dict.Add("熔融盐", new string[2] { "rongrongyan", "rry" });
+            Dict.Add("熔融钢", new string[2] { "rongronggang", "rrg" });
+            Dict.Add("熔融蔗糖", new string[2] { "rongrongzhetang", "rrzt" });
+            Dict.Add("熔融合成气", new string[2] { "rongronghechengqi", "rrhcq" });
+            Dict.Add("熔融钨", new string[2] { "rongrongwu", "rrw" });
+            Dict.Add("熔融二硒化钨", new string[2] { "rongrongerxihuawu", "rrexhw" });
+            Dict.Add("熔融铀", new string[2] { "rongrongyou", "rry" });
+            Dict.Add("泥巴", new string[2] { "niba", "nb" });
+            Dict.Add("液态石脑油", new string[2] { "yetaishinaoyou", "ytsny" });
+            Dict.Add("铌", new string[2] { "ni", "n" });
+            Dict.Add("气态铌", new string[2] { "qitaini", "qtn" });
+            Dict.Add("液态核废料", new string[2] { "yetaihefeiliao", "ythfl" });
+            Dict.Add("黑曜石", new string[2] { "heiyaoshi", "hys" });
+            Dict.Add("氧气", new string[2] { "yangqi", "yq" });
+            Dict.Add("氧石", new string[2] { "yangshi", "ys" });
+            Dict.Add("石油", new string[2] { "shiyou", "sy" });
+            Dict.Add("磷酸盐结晶", new string[2] { "linsuanyanjiejing", "lsyjj" });
+            Dict.Add("磷矿", new string[2] { "linkuang", "lk" });
+            Dict.Add("精炼磷", new string[2] { "jinglianlin", "jll" });
+            Dict.Add("气态磷", new string[2] { "qitailin", "qtl" });
+            Dict.Add("塑料", new string[2] { "suliao", "sl" });
+            Dict.Add("绿藻浮渣", new string[2] { "lvzaofuzha", "lzfz" });
+            Dict.Add("丙烷", new string[2] { "bingwan", "bw" });
+            Dict.Add("镭", new string[2] { "lei", "l" });
+            Dict.Add("精炼碳", new string[2] { "jingliantan", "jlt" });
+            Dict.Add("浮土", new string[2] { "futu", "ft" });
+            Dict.Add("液态树脂", new string[2] { "yetaishuzhi", "ytsz" });
+            Dict.Add("气态岩", new string[2] { "qitaiyan", "qty" });
+            Dict.Add("铁锈", new string[2] { "tiexiu", "tx" });
+            Dict.Add("盐", new string[2] { "yan", "y" });
+            Dict.Add("气态盐", new string[2] { "qitaiyan", "qty" });
+            Dict.Add("盐水", new string[2] { "yanshui", "ys" });
+            Dict.Add("沙子", new string[2] { "shazi", "sz" });
+            Dict.Add("砂水泥", new string[2] { "shashuini", "ssn" });
+            Dict.Add("砂岩", new string[2] { "shayan", "sy" });
+            Dict.Add("沉积岩", new string[2] { "chenjiyan", "cjy" });
+            Dict.Add("建筑板材", new string[2] { "jianzhubancai", "jzbc" });
+            Dict.Add("菌泥", new string[2] { "junni", "jn" });
+            Dict.Add("雪", new string[2] { "xue", "x" });
+            Dict.Add("固态二氧化碳", new string[2] { "gutaieryanghuatan", "gteyht" });
+            Dict.Add("固态氯", new string[2] { "gutailv", "gtl" });
+            Dict.Add("固态原油", new string[2] { "gutaiyuanyou", "gtyy" });
+            Dict.Add("固态乙醇", new string[2] { "gutaiyichun", "gtyc" });
+            Dict.Add("固态氢", new string[2] { "gutaiqing", "gtq" });
+            Dict.Add("固态汞", new string[2] { "gutaigong", "gtg" });
+            Dict.Add("固态甲烷", new string[2] { "gutaijiawan", "gtjw" });
+            Dict.Add("固态石脑油", new string[2] { "gutaishinaoyou", "gtsny" });
+            Dict.Add("固态核废料", new string[2] { "gutaihefeiliao", "gthfl" });
+            Dict.Add("固态氧", new string[2] { "gutaiyang", "gty" });
+            Dict.Add("固态石油", new string[2] { "gutaishiyou", "gtsy" });
+            Dict.Add("固态丙烷", new string[2] { "gutaibingwan", "gtbw" });
+            Dict.Add("固态树脂", new string[2] { "gutaishuzhi", "gtsz" });
+            Dict.Add("固态超级冷却剂", new string[2] { "gutaichaojilengqueji", "gtcjlqj" });
+            Dict.Add("固态合成气", new string[2] { "gutaihechengqi", "gthcq" });
+            Dict.Add("固态粘性凝胶", new string[2] { "gutaizhanxingningjiao", "gtzxnj" });
+            Dict.Add("高硫天然气", new string[2] { "gaoliutianranqi", "gltrq" });
+            Dict.Add("蒸汽", new string[2] { "zhengqi", "zq" });
+            Dict.Add("钢", new string[2] { "gang", "g" });
+            Dict.Add("气态钢", new string[2] { "qitaigang", "qtg" });
+            Dict.Add("蔗糖", new string[2] { "zhetang", "zt" });
+            Dict.Add("硫", new string[2] { "liu", "l" });
+            Dict.Add("硫蒸气", new string[2] { "liuzhengqi", "lzq" });
+            Dict.Add("超级冷却剂", new string[2] { "chaojilengqueji", "cjlqj" });
+            Dict.Add("气态超级冷却剂", new string[2] { "qitaichaojilengqueji", "qtcjlqj" });
+            Dict.Add("隔热质", new string[2] { "gerezhi", "grz" });
+            Dict.Add("合成气", new string[2] { "hechengqi", "hcq" });
+            Dict.Add("导热质", new string[2] { "daorezhi", "drz" });
+            Dict.Add("测试元素", new string[2] { "ceshiyuansu", "csys" });
+            Dict.Add("污染泥", new string[2] { "wuranni", "wrn" });
+            Dict.Add("污染土", new string[2] { "wurantu", "wrt" });
+            Dict.Add("钨", new string[2] { "wu", "w" });
+            Dict.Add("二硒化钨", new string[2] { "erxihuawu", "exhw" });
+            Dict.Add("气态二硒化钨", new string[2] { "qitaierxihuawu", "qtexhw" });
+            Dict.Add("气态钨", new string[2] { "qitaiwu", "qtw" });
+            Dict.Add("中子质", new string[2] { "zhongzizhi", "zzz" });
+            Dict.Add("铀矿", new string[2] { "youkuang", "yk" });
+            Dict.Add("真空", new string[2] { "zhenkong", "zk" });
+            Dict.Add("粘性凝胶流体", new string[2] { "zhanxingningjiaoliuti", "zxnjlt" });
+            Dict.Add("虚空", new string[2] { "xukong", "xk" });
+            Dict.Add("水", new string[2] { "shui", "s" });
+            Dict.Add("黑钨矿", new string[2] { "heiwukuang", "hwk" });
+            Dict.Add("黄饼", new string[2] { "huangbing", "hb" });
+
+            return Dict;
         }
 
     }
