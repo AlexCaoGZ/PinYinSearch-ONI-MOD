@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{80E04357-E27D-48E1-9825-7B8DCCE1F05D}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PinYinSearch_ONI_MOD</RootNamespace>
     <AssemblyName>PinYinSearch ONI-MOD</AssemblyName>
