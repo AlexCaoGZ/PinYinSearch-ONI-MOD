@@ -5,6 +5,7 @@ using System.Text;
 using STRINGS;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace PinYinSearch
 {
@@ -492,5 +493,54 @@ namespace PinYinSearch
         }
     }
 
-   
+    [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
+    internal class ItemSearch
+    {
+        //获取TreeFilterableSideScreenRow class里面的SetArrowToggleState()
+        static MethodInfo mSetArrowToggleState = typeof(TreeFilterableSideScreenRow).GetMethod("SetArrowToggleState");
+        static FastInvokeHandler SetArrowToggleState = MethodInvoker.GetHandler(mSetArrowToggleState, true);
+
+        //获取游戏函数内base.gameObject.SetActive(flag)所对应的原函数
+        static MethodInfo mSetActive = typeof(UnityEngine.GameObject).GetMethod("SetActive");
+        static FastInvokeHandler SetActive = MethodInvoker.GetHandler(mSetActive, true);
+        public static void Postfix(ref Tag thisCategoryTag, ref string search)
+        {
+            var harmony = new Harmony("com.company.project.product");
+            Harmony.DEBUG = true;
+
+            try
+            {
+                //获取rowElements和arrowToggle
+                List<TreeFilterableSideScreenElement> rowElements = Traverse.Create(typeof(TreeFilterableSideScreenRow)).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
+                MultiToggle arrowToggle = Traverse.Create(typeof(TreeFilterableSideScreenRow)).Field("arrowToggle").GetValue<MultiToggle>();
+                FileLog.Log("搜索了" + search);
+                FileLog.Log("tag是" + thisCategoryTag.Name);
+
+                bool flag = false;
+                bool flag2 = thisCategoryTag.ProperNameStripLink().ToUpper().Contains(search.ToUpper());
+                search = search.ToUpper();
+                foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
+                {
+                    bool flag3 = flag2 || treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink().ToUpper().Contains(search.ToUpper());
+                    treeFilterableSideScreenElement.gameObject.SetActive(flag3);
+                    flag = (flag || flag3);
+                }
+                SetActive(flag);
+                if (search != "" && flag && arrowToggle.CurrentState == 0)
+                {
+                    SetArrowToggleState(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugUtil.LogWarningArgs(new object[]
+                {
+                ex.StackTrace
+                });
+            }
+
+        }
+    }
+
+
 }
