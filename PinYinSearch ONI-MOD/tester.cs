@@ -12,7 +12,73 @@ namespace PinYinSearch_ONI_MOD
     {
         static void Main(string[] args)
         {
+            tester ter = new tester();
             Dictionary<string, string[]> Dict = new Dictionary<string, string[]>();
+
+            Dict = ter.creatbuildingPinYinDict(Dict);
+
+
+            //科雷用了ToLower()，所以我也用了
+            //不过获取到的是中文，应该没有区别
+            string inputString = "hjp";
+            string buildingName = "火箭平台".ToLower();
+            String buildingPinYin = null;
+            String buildingPinYinInit = null;
+            bool inDict = false;
+
+            //检查字典
+            for (int i = 0; i < Dict.Count; i++)
+            {
+                KeyValuePair<string, string[]> keyValue = Dict.ElementAt(i);
+                if (keyValue.Key == buildingName)
+                {
+                    inDict = true;
+                    buildingPinYin = keyValue.Value[0];
+                    buildingPinYinInit = keyValue.Value[1];
+                    break;
+                }
+            }
+            if (!inDict)
+            {
+                //生成拼音
+                buildingPinYin = PinyinHelper.GetPinyin(buildingName);
+                //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
+                //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
+                if (buildingPinYin.Length > buildingName.Length * 2)
+                {
+                    //获取首字母作为快捷搜索
+                    String[] buildingPinYinTemp = buildingPinYin.Split(' ');
+                    StringBuilder buildingPinYinInitTemp = new StringBuilder(64);
+                    foreach (string str in buildingPinYinTemp)
+                    {
+                        buildingPinYinInitTemp.Append(str[0]);
+                    }
+                    buildingPinYinInit = buildingPinYinInitTemp.ToString();
+
+                    //去除拼音中的空格分隔，获取搜索输入
+                    buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
+                }
+                else
+                {
+                    //英文情况，大小写各检查一次
+                    buildingPinYin = buildingName.ToUpper();
+                    buildingPinYinInit = buildingName.ToLower();
+                }
+            }
+
+            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || buildingName.Contains(inputString));
+            Console.ReadKey();
+        }
+        /*
+         * 这是给缺氧调试时候用debug
+        DebugUtil.LogWarningArgs(new object[]
+            {
+                "给出的名字",
+                buildingName
+        });
+        */
+        private Dictionary<string, string[]> creatbuildingPinYinDict(Dictionary<string, string[]> Dict)
+        {
             Dict.Add("核能配药桌", new string[2] { "henengpeiyaozhuo", "hnpyz" });
             Dict.Add("病诊站", new string[2] { "bingzhenzhan", "bzz" });
             Dict.Add("超级计算机", new string[2] { "chaojijisuanji", "cjjsj" });
@@ -409,44 +475,8 @@ namespace PinYinSearch_ONI_MOD
             Dict.Add("高负荷导线接合板", new string[2] { "gaofuhedaoxianjieheban", "gfhdxjhb" });
             Dict.Add("高负荷导线", new string[2] { "gaofuhedaoxian", "gfhdx" });
             Dict.Add("木料燃烧器", new string[2] { "muliaoranshaoqi", "mlrsq" });
-
-            //科雷用了ToLower()，所以我也用了
-            //不过获取到的是中文，应该没有区别
-            string inputString = "POINT";
-            string buildingName = "hauling point".ToLower();
-            String buildingPinYin = PinyinHelper.GetPinyin(buildingName);
-            String buildingPinYinInit = null;
-
-            if (buildingPinYin.Length > buildingName.Length*2)
-            {
-                //获取首字母作为快捷搜索
-                String[] buildingPinYinTemp = buildingPinYin.Split(' ');
-                StringBuilder buildingPinYinInitTemp = new StringBuilder();
-                foreach (string str in buildingPinYinTemp)
-                {
-                    buildingPinYinInitTemp.Append(str[0]);
-                }
-                buildingPinYinInit = buildingPinYinInitTemp.ToString();
-
-                //去除拼音中的空格分隔，获取搜索输入
-                buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
-            }
-            else
-            {
-                buildingPinYin = buildingName;
-                buildingPinYinInit = buildingName;
-            }
-
-            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString));
-            Console.ReadKey();
+            return Dict;
         }
-        /*
-         * 这是给缺氧调试时候用debug
-        DebugUtil.LogWarningArgs(new object[]
-            {
-                "给出的名字",
-                buildingName
-        });
-        */
     }
+
 }

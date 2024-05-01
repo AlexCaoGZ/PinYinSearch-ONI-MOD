@@ -24,7 +24,7 @@ namespace PinYinSearch
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
             string buildingName = UI.StripLinkFormatting(building.Name).ToLower();
-            string inputString = BuildingGroupScreen.Instance.inputField.text.ToUpper();
+            string inputString = BuildingGroupScreen.Instance.inputField.text.ToLower();
             String buildingPinYin = null;
             String buildingPinYinInit = null;
             bool inDict = false;
@@ -38,12 +38,13 @@ namespace PinYinSearch
                     inDict = true;
                     buildingPinYin = keyValue.Value[0];
                     buildingPinYinInit = keyValue.Value[1];
+                    break;
                 }
             }
             if (!inDict)
             {
                 //生成拼音
-                buildingPinYin = PinyinHelper.GetPinyin(buildingName);
+                buildingPinYin = PinyinHelper.GetPinyin(buildingName).ToLower();
                 //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
                 //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
                 if (buildingPinYin.Length > buildingName.Length * 2)
@@ -58,7 +59,7 @@ namespace PinYinSearch
                     buildingPinYinInit = buildingPinYinInitTemp.ToString();
 
                     //去除拼音中的空格分隔，获取搜索输入
-                    buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
+                    buildingPinYin = buildingPinYin.Replace(" ", "");
                 }
                 else
                 {
