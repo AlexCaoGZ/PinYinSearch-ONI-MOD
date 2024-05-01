@@ -24,7 +24,7 @@ class poData:
         self.ID = ID
 
     
-    def isBuildingName(self) ->bool:
+    def isBuilding(self) ->bool:
         '''
         判断这个物体是不是建筑
         返回true false
@@ -34,9 +34,32 @@ class poData:
                 if text.__contains__("link"):
                     self.namePinYin=""
                     self.namePinYinInit=""
-                    self.buildingName = re.search(r"\>(.*?)\<",self.msgstr[0]).group(1)
-                    namePinYin = lazy_pinyin(self.buildingName,style=0)
-                    namePinYinInit = lazy_pinyin(self.buildingName,style=4)
+                    self.itemName = re.search(r"\>(.*?)\<",self.msgstr[0]).group(1)
+                    namePinYin = lazy_pinyin(self.itemName,style=0)
+                    namePinYinInit = lazy_pinyin(self.itemName,style=4)
+                    for item in namePinYin:
+                        self.namePinYin = self.namePinYin + item
+                    for item in namePinYinInit:
+                        self.namePinYinInit = self.namePinYinInit + item
+                    return True
+        else:
+            return False
+        
+    def isElement(self) -> bool:
+        '''
+        判断是不是元素
+        代码复用与判断建筑
+        返回BOOL类
+        '''
+        #STRINGS.ELEMENTS.TOXICMUD.NAME
+        if self.msgctxt.__contains__("STRINGS.ELEMENTS.") and self.msgctxt.__contains__(".NAME"):
+            for text in self.msgstr:
+                if text.__contains__("link"):
+                    self.namePinYin=""
+                    self.namePinYinInit=""
+                    self.itemName = re.search(r"\>(.*?)\<",self.msgstr[0]).group(1)
+                    namePinYin = lazy_pinyin(self.itemName,style=0)
+                    namePinYinInit = lazy_pinyin(self.itemName,style=4)
                     for item in namePinYin:
                         self.namePinYin = self.namePinYin + item
                     for item in namePinYinInit:
@@ -78,8 +101,14 @@ def makePoData(textList:list=[]) -> poData:
 
 
 def main():
+    #目标是：
+    #0->建筑
+    #1->元素
+    MODE=1
+    PATH = r"D:\abc\strings_preinstalled_zh_klei.po"
+
     #读取po文件
-    with open('strings_preinstalled_zh_klei.po',encoding='utf-8') as file:
+    with open(PATH,encoding='utf-8') as file:
         content = file.readlines()
     #注意headerFlag，在测试时我把po文件的header去除了
     #以后更新的话要恢复这个跳过header的设置
@@ -99,25 +128,33 @@ def main():
                     poDataList.append(makePoData(tempList))
                 tempList.clear()
 
-    #给poData指定ID
-    buildingList = []
-    for i,poData in enumerate(poDataList):
-        poData.assignID(i)
-        if poData.isBuildingName():
-            buildingList.append(poData)
+    if(MODE == 0):
+        #给poData指定ID，以及判断是否建筑
+        itemList = []
+        for i,poData in enumerate(poDataList):
+            poData.assignID(i)
+            if poData.isBuilding():
+                itemList.append(poData)
+    elif(MODE == 1):
+        #给poData指定ID，以及判断是否元素
+        itemList = []
+        for i,poData in enumerate(poDataList):
+            poData.assignID(i)
+            if poData.isElement():
+                itemList.append(poData)
 
     #科雷的po文件里面有大量重名，必须去除
     #上面的指定ID也是为了去除重名服务的
-    for building1 in buildingList:
-        for building2 in buildingList:
-            if building1.buildingName == building2.buildingName and building1.ID != building2.ID:
-                buildingList.remove(building1)
+    for building1 in itemList:
+        for building2 in itemList:
+            if building1.itemName == building2.itemName and building1.ID != building2.ID:
+                itemList.remove(building1)
 
     #构建Dict.Add（）函数
     #Dict.Add("bb", new string[3] { "Mumbai", "London", "New York" });
     outputList = []
-    for building in buildingList:
-        temp = "Dict.Add(\""+building.buildingName+"\", new string[2] { \""+building.namePinYin+"\", \""+building.namePinYinInit+"\" });"
+    for building in itemList:
+        temp = "Dict.Add(\""+building.itemName+"\", new string[2] { \""+building.namePinYin+"\", \""+building.namePinYinInit+"\" });"
         outputList.append(temp)
 
     #输出
