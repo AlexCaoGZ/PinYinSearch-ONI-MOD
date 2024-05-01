@@ -20,6 +20,9 @@ class poData:
         self.msgid = msgid
         self.msgstr = msgstr
 
+    def assignID(self, ID:int)->None:
+        self.ID = ID
+
     
     def isBuildingName(self) ->bool:
         '''
@@ -96,9 +99,16 @@ def main():
                 tempList.clear()
 
     buildingList = []
-    for poData in poDataList:
+    for i,poData in enumerate(poDataList):
+        poData.assignID(i)
         if poData.isBuildingName():
             buildingList.append(poData)
+
+    
+    for building1 in buildingList:
+        for building2 in buildingList:
+            if building1.buildingName == building2.buildingName and building1.ID != building2.ID:
+                buildingList.remove(building1)
 
     outputList = []
     for building in buildingList:
