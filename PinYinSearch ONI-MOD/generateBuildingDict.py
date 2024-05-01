@@ -78,14 +78,15 @@ def makePoData(textList:list=[]) -> poData:
 
 
 def main():
-
+    #读取po文件
     with open('strings_preinstalled_zh_klei.po',encoding='utf-8') as file:
         content = file.readlines()
-
+    #注意headerFlag，在测试时我把po文件的header去除了
+    #以后更新的话要恢复这个跳过header的设置
     tempList = []
     poDataList = []
     headerFlag = True
-
+    #生成poDataBlock
     for line in content:
         line = line.strip()
         if not line.startswith(r"#~"):
@@ -98,29 +99,31 @@ def main():
                     poDataList.append(makePoData(tempList))
                 tempList.clear()
 
+    #给poData指定ID
     buildingList = []
     for i,poData in enumerate(poDataList):
         poData.assignID(i)
         if poData.isBuildingName():
             buildingList.append(poData)
 
-    
+    #科雷的po文件里面有大量重名，必须去除
+    #上面的指定ID也是为了去除重名服务的
     for building1 in buildingList:
         for building2 in buildingList:
             if building1.buildingName == building2.buildingName and building1.ID != building2.ID:
                 buildingList.remove(building1)
 
+    #构建Dict.Add（）函数
+    #Dict.Add("bb", new string[3] { "Mumbai", "London", "New York" });
     outputList = []
     for building in buildingList:
         temp = "Dict.Add(\""+building.buildingName+"\", new string[2] { \""+building.namePinYin+"\", \""+building.namePinYinInit+"\" });"
         outputList.append(temp)
 
+    #输出
     with open('buildList.txt',encoding='utf-8',mode="w") as file:
         for line in outputList:
             file.write(line+'\n')
-
-    #Dict.Add("bb", new string[3] { "Mumbai", "London", "New York" });
-    #Dict.Add("bb1", new string[3] { "Mumbai222", "Londo333n", "New 444York" });
 
 if __name__ == "__main__":
     main()
