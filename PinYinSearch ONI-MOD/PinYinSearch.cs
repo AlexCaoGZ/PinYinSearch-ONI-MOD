@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using STRINGS;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PinYinSearch
 {
@@ -13,6 +14,7 @@ namespace PinYinSearch
         private Dictionary<string, string[]> _buildingPinYinDict = new Dictionary<string, string[]>();
         public static void Postfix(ref bool __result, ref Def building)
         {
+            //初始化字典
             var bs = new BuildingSearch();
             if (bs._buildingPinYinDict.Count == 0)
             {
@@ -23,30 +25,47 @@ namespace PinYinSearch
             //不过获取到的是中文，应该没有区别
             string buildingName = UI.StripLinkFormatting(building.Name).ToLower();
             string inputString = BuildingGroupScreen.Instance.inputField.text.ToUpper();
-            String buildingPinYin = PinyinHelper.GetPinyin(buildingName);
+            String buildingPinYin = null;
             String buildingPinYinInit = null;
+            bool inDict = false;
 
-            //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
-            //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
-            if (buildingPinYin.Length > buildingName.Length * 2)
+            //检查字典
+            for(int i = 0; i< bs._buildingPinYinDict.Count;i++)
             {
-                //获取首字母作为快捷搜索
-                String[] buildingPinYinTemp = buildingPinYin.Split(' ');
-                StringBuilder buildingPinYinInitTemp = new StringBuilder(64);
-                foreach (string str in buildingPinYinTemp)
+                KeyValuePair<string, string[]> keyValue = bs._buildingPinYinDict.ElementAt(i);
+                if(keyValue.Key == buildingName)
                 {
-                    buildingPinYinInitTemp.Append(str[0]);
+                    inDict = true;
+                    buildingPinYin = keyValue.Value[0];
+                    buildingPinYinInit = keyValue.Value[1];
                 }
-                buildingPinYinInit = buildingPinYinInitTemp.ToString();
-
-                //去除拼音中的空格分隔，获取搜索输入
-                buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
             }
-            else
+            if (!inDict)
             {
-                //英文情况，大小写各检查一次
-                buildingPinYin = buildingName.ToUpper();
-                buildingPinYinInit = buildingName.ToLower();
+                //生成拼音
+                buildingPinYin = PinyinHelper.GetPinyin(buildingName);
+                //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
+                //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
+                if (buildingPinYin.Length > buildingName.Length * 2)
+                {
+                    //获取首字母作为快捷搜索
+                    String[] buildingPinYinTemp = buildingPinYin.Split(' ');
+                    StringBuilder buildingPinYinInitTemp = new StringBuilder(64);
+                    foreach (string str in buildingPinYinTemp)
+                    {
+                        buildingPinYinInitTemp.Append(str[0]);
+                    }
+                    buildingPinYinInit = buildingPinYinInitTemp.ToString();
+
+                    //去除拼音中的空格分隔，获取搜索输入
+                    buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
+                }
+                else
+                {
+                    //英文情况，大小写各检查一次
+                    buildingPinYin = buildingName.ToUpper();
+                    buildingPinYinInit = buildingName.ToLower();
+                }
             }
 
             //subcategoryName不知道是什么，可能是搜索类别用的？
