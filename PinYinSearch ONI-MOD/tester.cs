@@ -1,4 +1,5 @@
-﻿using STRINGS;
+﻿using HarmonyLib;
+using STRINGS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,61 +13,20 @@ namespace PinYinSearch_ONI_MOD
     {
         static void Main(string[] args)
         {
-            tester ter = new tester();
-            Dictionary<string, string[]> Dict = new Dictionary<string, string[]>();
-
-            Dict = ter.creatbuildingPinYinDict(Dict);
-
 
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
-            string inputString = "hjp";
-            string buildingName = "火箭平台".ToLower();
-            String buildingPinYin = null;
-            String buildingPinYinInit = null;
-            bool inDict = false;
+            string buildingName = "梯子";
+            string inputString = "tz";
 
-            //检查字典
-            for (int i = 0; i < Dict.Count; i++)
-            {
-                KeyValuePair<string, string[]> keyValue = Dict.ElementAt(i);
-                if (keyValue.Key == buildingName)
-                {
-                    inDict = true;
-                    buildingPinYin = keyValue.Value[0];
-                    buildingPinYinInit = keyValue.Value[1];
-                    break;
-                }
-            }
-            if (!inDict)
-            {
-                //生成拼音
-                buildingPinYin = PinyinHelper.GetPinyin(buildingName);
-                //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
-                //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
-                if (buildingPinYin.Length > buildingName.Length * 2)
-                {
-                    //获取首字母作为快捷搜索
-                    String[] buildingPinYinTemp = buildingPinYin.Split(' ');
-                    StringBuilder buildingPinYinInitTemp = new StringBuilder(64);
-                    foreach (string str in buildingPinYinTemp)
-                    {
-                        buildingPinYinInitTemp.Append(str[0]);
-                    }
-                    buildingPinYinInit = buildingPinYinInitTemp.ToString();
+            //获取拼音
+            String buildingPinYin = pinYinDict.getPinYin(buildingName);
 
-                    //去除拼音中的空格分隔，获取搜索输入
-                    buildingPinYin = buildingPinYin.Replace(" ", "").ToUpper();
-                }
-                else
-                {
-                    //英文情况，大小写各检查一次
-                    buildingPinYin = buildingName.ToUpper();
-                    buildingPinYinInit = buildingName.ToLower();
-                }
-            }
-
-            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingPinYinInit.Contains(inputString) || buildingName.Contains(inputString));
+            //subcategoryName不知道是什么，可能是搜索类别用的？
+            //用Traverse获取了它本来的数值，应该可能大概没破坏本身的功能
+            string subcategoryName = null;
+            //          检查拼音 + 英文                          检查中文
+            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString)));
             Console.ReadKey();
         }
         /*
