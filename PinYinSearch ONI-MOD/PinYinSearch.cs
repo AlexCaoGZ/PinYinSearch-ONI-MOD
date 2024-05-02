@@ -6,6 +6,8 @@ using STRINGS;
 using System.Collections.Generic;
 using System.Linq;
 using PinYinSearch_ONI_MOD;
+using ProcGen.Noise;
+using YamlDotNet.Core.Tokens;
 
 namespace PinYinSearch
 {
@@ -46,7 +48,6 @@ namespace PinYinSearch
     [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
     internal class ItemSearch
     {
-        private Dictionary<string, string[]> _elementPinYinDict = new Dictionary<string, string[]>();
 
         public static bool Prefix(TreeFilterableSideScreenRow __instance, ref Tag thisCategoryTag, ref string search)
         {
@@ -55,6 +56,7 @@ namespace PinYinSearch
             List<TreeFilterableSideScreenElement> rowElements = Traverse.Create(__instance).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
             MultiToggle arrowToggle = Traverse.Create(__instance).Field("arrowToggle").GetValue<MultiToggle>();
             
+            //这科雷搜建筑用tolower()，搜元素用toupper()，不怕哪天儿给自己整个活儿吗？
             //搜索类别
             bool flag = false;
             bool flag2 = thisCategoryTag.ProperNameStripLink().ToUpper().Contains(search.ToUpper());
@@ -79,6 +81,34 @@ namespace PinYinSearch
             return false;
         }
 
+    }
+
+    [HarmonyPatch(typeof(AllResourcesScreen), "PassesSearchFilter")]
+    internal class globalSearch
+    {
+
+        public static bool Prefix(ref bool __result, ref Tag tag, ref string filter)
+        {
+            //科雷这里用的是ToUpper()
+            //但我上面用的全部都是ToLower()
+            //还是和我自己保持一致的好
+            filter = filter.ToLower();
+            string text = pinYinDict.getPinYin(tag.ProperName());
+
+            //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
+            string textTemp = "";
+            foreach (char c in text)
+            {
+                if (c >= 0x4E00 && c <= 0x9FA5)
+                {
+                    textTemp = textTemp + c;
+                }
+            }
+            text = textTemp;
+            __result = !(filter != "") || text.Contains(filter) || tag.Name.ToLower().Contains(filter);
+
+            return false;
+        }
     }
 
 

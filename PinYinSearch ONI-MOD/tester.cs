@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TinyPinyin;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PinYinSearch_ONI_MOD
 {
@@ -13,11 +14,21 @@ namespace PinYinSearch_ONI_MOD
     {
         static void Main(string[] args)
         {
+            string text = "abc一二三";
+            string textTemp = "";
+            foreach (char c in text)
+            {
+                if (c >= 0x4E00 && c <= 0x9FA5)
+                {
+                    textTemp = textTemp + c;
+                }
+            }
+            text = textTemp;
 
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
             string buildingName = "梯子";
-            string inputString = "tz";
+            string inputString = "nt";
 
             //获取拼音
             String buildingPinYin = pinYinDict.getPinYin(buildingName);

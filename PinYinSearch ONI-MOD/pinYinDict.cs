@@ -66,16 +66,11 @@ namespace PinYinSearch_ONI_MOD
         ///根据科雷的.po本地化文件创建的字典
         ///具体看generateBuildingDict.py
         ///</summary>
-        ///<param name="Dict">传入的空字典</param>
         ///<returns>返回的字典</returns>
         public static Dictionary<string, string[]> creatPinYinDict()
         {
             Dictionary<string, string[]> Dict = new Dictionary<string, string[]>();
-            DebugUtil.LogWarningArgs(new object[]
-            {
-                "创建了字典",
-                Dict.Count
-            });
+
             Dict.Add("核能配药桌", new string[2] { "henengpeiyaozhuo", "hnpyz" });
             Dict.Add("病诊站", new string[2] { "bingzhenzhan", "bzz" });
             Dict.Add("超级计算机", new string[2] { "chaojijisuanji", "cjjsj" });
