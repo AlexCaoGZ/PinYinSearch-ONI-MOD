@@ -8,6 +8,7 @@ using System.Linq;
 using PinYinSearch_ONI_MOD;
 using ProcGen.Noise;
 using YamlDotNet.Core.Tokens;
+using System.Text.RegularExpressions;
 
 namespace PinYinSearch
 {
@@ -95,13 +96,22 @@ namespace PinYinSearch
             filter = filter.ToLower();
 
             //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
+            Match m = Regex.Match(tag.ProperName(), "\\<.*\\>", RegexOptions.IgnoreCase);
             string textTemp = "";
-            foreach (char c in tag.ProperName())
+            if (m.Success)
             {
-                if (c >= 0x4E00 && c <= 0x9FA5)
+                textTemp = m.Value;
+            }
+            else
+            {
+                //正则式无法分割，恢复filter，使用游戏本来的逻辑
+                filter = filter.ToUpper();
+                DebugUtil.LogWarningArgs(new object[]
                 {
-                    textTemp = textTemp + c;
-                }
+                "拼音搜索出错，正在搜索：",
+                filter
+                });
+                return true;
             }
             string text = pinYinDict.getPinYin(textTemp);
 
