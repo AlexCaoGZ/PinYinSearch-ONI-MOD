@@ -93,18 +93,18 @@ namespace PinYinSearch
             //但我上面用的全部都是ToLower()
             //还是和我自己保持一致的好
             filter = filter.ToLower();
-            string text = pinYinDict.getPinYin(tag.ProperName());
 
             //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
             string textTemp = "";
-            foreach (char c in text)
+            foreach (char c in tag.ProperName())
             {
                 if (c >= 0x4E00 && c <= 0x9FA5)
                 {
                     textTemp = textTemp + c;
                 }
             }
-            text = textTemp;
+            string text = pinYinDict.getPinYin(textTemp);
+
             __result = !(filter != "") || text.Contains(filter) || tag.Name.ToLower().Contains(filter);
 
             return false;
