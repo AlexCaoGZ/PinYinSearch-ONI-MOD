@@ -105,7 +105,8 @@ namespace PinYinSearch
             }
             string text = pinYinDict.getPinYin(textTemp);
 
-            __result = !(filter != "") || text.Contains(filter) || tag.Name.ToLower().Contains(filter);
+            //tag.Name返回的是英文，会弄乱搜索结果
+            __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
 
             return false;
         }
