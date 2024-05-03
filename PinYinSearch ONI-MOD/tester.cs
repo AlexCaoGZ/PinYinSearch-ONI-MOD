@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using TinyPinyin;
 using YamlDotNet.Core.Tokens;
 using static NavGrid;
+using static STRINGS.MISC;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace PinYinSearch_ONI_MOD
@@ -18,7 +19,11 @@ namespace PinYinSearch_ONI_MOD
     {
         static void Main(string[] args)
         {
-            string name1 = "< link = \"FILTER\"  过滤介质 / link >";
+
+            string filter = "nitu";
+            string name1 = "<link=\"FILTER\">过滤介质</link>";
+
+            //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
             Match m = Regex.Match(name1, "\\>(.*?)\\<", RegexOptions.IgnoreCase);
             string textTemp = "";
             if (m.Success)
@@ -27,23 +32,14 @@ namespace PinYinSearch_ONI_MOD
             }
             else
             {
-                Console.WriteLine("1111");
+                textTemp = name1;
             }
-            Console.WriteLine(textTemp);
-
-            //科雷用了ToLower()，所以我也用了
-            //不过获取到的是中文，应该没有区别
-            string buildingName = "梯子";
-            string inputString = "nt";
 
             //获取拼音
-            String buildingPinYin = pinYinDict.getPinYin(buildingName);
+            string text = pinYinDict.getPinYin(textTemp);
 
-            //subcategoryName不知道是什么，可能是搜索类别用的？
-            //用Traverse获取了它本来的数值，应该可能大概没破坏本身的功能
-            string subcategoryName = null;
-            //          检查拼音 + 英文                          检查中文
-            Console.WriteLine(buildingPinYin.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString)));
+            //tag.Name返回的是元素的英文名，会弄乱搜索结果
+            Console.WriteLine(!(filter != "") || text.Contains(filter));// || tag.Name.ToLower().Contains(filter);
             Console.ReadKey();
         }
         /*

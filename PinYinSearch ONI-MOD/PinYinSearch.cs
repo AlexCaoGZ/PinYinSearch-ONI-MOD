@@ -96,7 +96,7 @@ namespace PinYinSearch
             filter = filter.ToLower();
 
             //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
-            Match m = Regex.Match(tag.ProperName(), "\\<(.*?)\\>", RegexOptions.IgnoreCase);
+            Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
             string textTemp = "";
             if (m.Success)
             {
