@@ -96,26 +96,21 @@ namespace PinYinSearch
             filter = filter.ToLower();
 
             //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
-            Match m = Regex.Match(tag.ProperName(), "\\<.*\\>", RegexOptions.IgnoreCase);
+            Match m = Regex.Match(tag.ProperName(), "\\<(.*?)\\>", RegexOptions.IgnoreCase);
             string textTemp = "";
             if (m.Success)
             {
-                textTemp = m.Value;
+                textTemp = m.Groups[1].Value;
             }
             else
             {
-                //正则式无法分割，恢复filter，使用游戏本来的逻辑
-                filter = filter.ToUpper();
-                DebugUtil.LogWarningArgs(new object[]
-                {
-                "拼音搜索出错，正在搜索：",
-                filter
-                });
-                return true;
+                textTemp = tag.ProperName();
             }
+
+            //获取拼音
             string text = pinYinDict.getPinYin(textTemp);
 
-            //tag.Name返回的是英文，会弄乱搜索结果
+            //tag.Name返回的是元素的英文名，会弄乱搜索结果
             __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
 
             return false;

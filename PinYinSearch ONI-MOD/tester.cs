@@ -1,11 +1,15 @@
 ﻿using HarmonyLib;
+using ProcGen.Noise;
 using STRINGS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TinyPinyin;
+using YamlDotNet.Core.Tokens;
+using static NavGrid;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace PinYinSearch_ONI_MOD
@@ -14,16 +18,18 @@ namespace PinYinSearch_ONI_MOD
     {
         static void Main(string[] args)
         {
-            string text = "abc一二三";
+            string name1 = "< link = \"FILTER\"  过滤介质 / link >";
+            Match m = Regex.Match(name1, "\\>(.*?)\\<", RegexOptions.IgnoreCase);
             string textTemp = "";
-            foreach (char c in text)
+            if (m.Success)
             {
-                if (c >= 0x4E00 && c <= 0x9FA5)
-                {
-                    textTemp = textTemp + c;
-                }
+                textTemp = m.Groups[1].Value;
             }
-            text = textTemp;
+            else
+            {
+                Console.WriteLine("1111");
+            }
+            Console.WriteLine(textTemp);
 
             //科雷用了ToLower()，所以我也用了
             //不过获取到的是中文，应该没有区别
