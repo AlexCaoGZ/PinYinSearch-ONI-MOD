@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Tester
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {
@@ -28,10 +28,10 @@ namespace Tester
             }
 
             //获取拼音
-            string text = pinYinDict.getPinYin(textTemp);
+            textTemp = textTemp + "|" + pinYinDict.getPinYin(textTemp);
 
             //tag.Name返回的是元素的英文名，会弄乱搜索结果
-            Console.WriteLine(!(filter != "") || text.Contains(filter));// || tag.Name.ToLower().Contains(filter);
+            Console.WriteLine(!(filter != "") || textTemp.Contains(filter));// || tag.Name.ToLower().Contains(filter);
             Console.ReadKey();
         }
         /*

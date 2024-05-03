@@ -66,8 +66,10 @@ namespace PinYinSearch
             search = search.ToUpper();
             foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
             {
+                string rowName = treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink();
+                rowName = rowName + "|" + pinYinDict.getPinYin(rowName);
                 //     在搜索类别里  || 配对元素名称
-                bool flag3 = flag2 || pinYinDict.getPinYin(treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink()).Contains(search.ToLower());
+                bool flag3 = flag2 || rowName.Contains(search.ToLower());
                 // 让这一个元素出现在行（Row）里
                 treeFilterableSideScreenElement.gameObject.SetActive(flag3);
                 flag = (flag || flag3);
@@ -108,7 +110,7 @@ namespace PinYinSearch
             }
 
             //获取拼音
-            string text = pinYinDict.getPinYin(textTemp);
+            string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
 
             //tag.Name返回的是元素的英文名，会弄乱搜索结果
             __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
