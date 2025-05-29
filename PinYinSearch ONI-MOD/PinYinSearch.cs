@@ -1,51 +1,84 @@
 ﻿using HarmonyLib;
-using TinyPinyin;
-using System;
-using System.Text;
-using STRINGS;
-using System.Collections.Generic;
-using System.Linq;
 using PinYinSearch_ONI_MOD;
 using ProcGen.Noise;
-using YamlDotNet.Core.Tokens;
+using STRINGS;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PinYinSearch
 {
 
-    [HarmonyPatch(typeof(PlanBuildingToggle), "CheckBuildingPassesSearchFilter")]
+    //建筑栏搜索功能
+    [HarmonyPatch(typeof(SearchUtil), "MakeBuildingDefCache")]
     internal class BuildingSearch
     {
-        public static bool Prefix(ref bool __result, ref Def building)
+        public static bool Prefix(SearchUtil.BuildingDefCache __instance, ref SearchUtil.BuildingDefCache __result, ref BuildingDef def)
         {
-            //科雷用了ToLower()，所以我也用了
-            //不过获取到的是中文，应该没有区别
-            string buildingName = UI.StripLinkFormatting(building.Name).ToLower();
-            string inputString = BuildingGroupScreen.Instance.inputField.text.ToLower();
-
-            //获取拼音
-            String buildingPinYin = pinYinDict.getPinYin(buildingName);
-
-            //subcategoryName不知道是什么，可能是搜索类别用的？
-            //用Traverse获取了它本来的数值，应该可能大概没破坏本身的功能
-            string subcategoryName = null;
-            try
+            SearchUtil.NameDescSearchTermsCache nameDescSearchTerms = new SearchUtil.NameDescSearchTermsCache
             {
-                subcategoryName = Traverse.Create(typeof(PlanBuildingToggle)).Field("subcategoryName").ToString();
-            }
-            catch (Exception ex) {
-                DebugUtil.LogWarningArgs(new object[]
+                nameDesc = new SearchUtil.NameDescCache
                 {
-                "拼音搜索 subcategoryName报错",
-                ex
-            });
+                    name = new SearchUtil.MatchCache
+                    {
+                        //这里是唯一变动的地方，其他都是科雷原版代码
+                        text = SearchUtil.Canonicalize(def.Name + pinYinDict.getPinYin(def.Name))
+                    },
+                    desc = new SearchUtil.MatchCache
+                    {
+                        text = SearchUtil.CanonicalizePhrase(def.Desc)
+                    }
+                },
+                searchTerms = def.SearchTerms
+            };
+            SearchUtil.MatchCache effect = new SearchUtil.MatchCache
+            {
+                text = SearchUtil.CanonicalizePhrase(def.Effect)
+            };
+            List<SearchUtil.NameDescCache> list = new List<SearchUtil.NameDescCache>();
+            ListPool<ComplexRecipe, PlanBuildingToggle>.PooledList pooledList = ListPool<ComplexRecipe, PlanBuildingToggle>.Allocate();
+            BuildingDef.CollectFabricationRecipes(def.PrefabID, pooledList);
+            foreach (ComplexRecipe complexRecipe in pooledList)
+            {
+                list.Add(new SearchUtil.NameDescCache
+                {
+                    name = new SearchUtil.MatchCache
+                    {
+                        text = SearchUtil.Canonicalize(complexRecipe.GetUIName(false))
+                    },
+                    desc = new SearchUtil.MatchCache
+                    {
+                        text = SearchUtil.CanonicalizePhrase(complexRecipe.description)
+                    }
+                });
             }
-            //          检查拼音 + 英文                          检查中文
-            __result = buildingPinYin.Contains(inputString) || buildingName.Contains(inputString) || (subcategoryName != null && subcategoryName.ToUpper().Contains(inputString));
+            pooledList.Recycle();
+            __result = new SearchUtil.BuildingDefCache
+            {
+                nameDescSearchTerms = nameDescSearchTerms,
+                effect = effect,
+                recipes = list
+            };
+
             return false;
         }
     }
 
+    //修改搜索评分threshold
+    [HarmonyPatch(typeof(SearchUtil.BuildingDefCache), "IsPassingScore")]
+    internal class changePassingScore
+    {
+        public static bool Prefix(SearchUtil.BuildingDefCache __instance, ref bool __result)
+        {
+            //科雷学之magic number
+            __result = __instance.Score >= 67;
+            return false;
+        }
+    }
+
+    //多物体筛选菜单（例如move it的筛选栏）
     [HarmonyPatch(typeof(TreeFilterableSideScreenRow), "FilterAgainstSearch")]
     internal class ItemSearch
     {
@@ -56,7 +89,7 @@ namespace PinYinSearch
             //获取两个private的变量
             List<TreeFilterableSideScreenElement> rowElements = Traverse.Create(__instance).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
             MultiToggle arrowToggle = Traverse.Create(__instance).Field("arrowToggle").GetValue<MultiToggle>();
-            
+
             //这科雷搜建筑用tolower()，搜元素用toupper()，不怕哪天儿给自己整个活儿吗？
             //搜索类别
             bool flag = false;
@@ -86,6 +119,7 @@ namespace PinYinSearch
 
     }
 
+    //星球总资源搜索栏
     [HarmonyPatch(typeof(AllResourcesScreen), "PassesSearchFilter")]
     internal class globalSearch
     {
@@ -119,5 +153,31 @@ namespace PinYinSearch
         }
     }
 
+    //筛选器搜索栏
+    [HarmonyPatch(typeof(SingleItemSelectionSideScreenBase), "TagContainsSearchWord")]
+    internal class FilterSearch
+    {
+
+        public static bool Prefix(SingleItemSelectionSideScreenBase __instance, ref bool __result, ref Tag tag, ref string search)
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                __result = false;
+            }
+            else
+            {
+                //科雷这里用的是ToUpper()
+                //但我上面用的全部都是ToLower()
+                //还是和我自己保持一致的好
+                search = search.ToLower();
+                //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
+                string textTemp = tag.ProperNameStripLink();
+                //获取拼音
+                string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
+                __result = text.Contains(search);
+            }
+            return false;
+        }
+    }
 
 }
