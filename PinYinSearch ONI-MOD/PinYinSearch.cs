@@ -126,28 +126,35 @@ namespace PinYinSearch
 
         public static bool Prefix(ref bool __result, ref Tag tag, ref string filter)
         {
-            //科雷这里用的是ToUpper()
-            //但我上面用的全部都是ToLower()
-            //还是和我自己保持一致的好
-            filter = filter.ToLower();
-
-            //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
-            Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
-            string textTemp = "";
-            if (m.Success)
+            if (string.IsNullOrEmpty(filter))
             {
-                textTemp = m.Groups[1].Value;
+                __result = false;
             }
             else
             {
-                textTemp = tag.ProperName();
+                //科雷这里用的是ToUpper()
+                //但我上面用的全部都是ToLower()
+                //还是和我自己保持一致的好
+                filter = filter.ToLower();
+
+                //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
+                Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
+                string textTemp = "";
+                if (m.Success)
+                {
+                    textTemp = m.Groups[1].Value;
+                }
+                else
+                {
+                    textTemp = tag.ProperName();
+                }
+
+                //获取拼音
+                string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
+
+                //tag.Name返回的是元素的英文名，会弄乱搜索结果
+                __result = text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
             }
-
-            //获取拼音
-            string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
-
-            //tag.Name返回的是元素的英文名，会弄乱搜索结果
-            __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
 
             return false;
         }
