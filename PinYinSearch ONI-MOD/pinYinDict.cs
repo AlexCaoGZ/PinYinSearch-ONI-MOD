@@ -5,10 +5,8 @@ using TinyPinyin;
 
 namespace PinYinSearch_ONI_MOD
 {
-    public static class pinYinDict
+    public class searchPinYin
     {
-        private static Dictionary<string, string[]> _PinYinDict = creatPinYinDict();
-
         ///<summary>
         ///返回拼音，首先在字典里查询，如果字典里没有会调用拼音转换函数
         ///</summary>
@@ -16,9 +14,10 @@ namespace PinYinSearch_ONI_MOD
         ///<returns>返回的拼音以及首字母，全小写，拼音和首字母之间会用|隔开</returns>
         public static string getPinYin(string text)
         {
+            pinYinDict pinYinDict = pinYinDict.Instance;
             string pinYin = null;
             string[] pinYinTemp = null;
-            if (_PinYinDict.TryGetValue(text, out pinYinTemp))
+            if (pinYinDict.Dict.TryGetValue(chineseFilter(text), out pinYinTemp))
             {
                 pinYin = pinYinTemp[0] + "|" + pinYinTemp[1];
             }
@@ -36,30 +35,60 @@ namespace PinYinSearch_ONI_MOD
         ///<returns>返回的拼音以及首字母，全小写，拼音和首字母之间会用|隔开</returns>
         private static string generatePinYin(string text)
         {
-            //生成拼音
-            string buildingPinYin = PinyinHelper.GetPinyin(text);
-            //当拼音后的长度超原本长度两倍以上的时候将其认为是非中文
-            //StringBuilder有默认长度，避免来一个超长的mod建筑名字塞爆StringBuilder
-            if (buildingPinYin.Length > text.Length * 2)
-            {
-                //获取首字母作为快捷搜索
-                String[] buildingPinYinTemp = buildingPinYin.Split(' ');
-                StringBuilder buildingPinYinInitTemp = new StringBuilder(64);
-                foreach (string str in buildingPinYinTemp)
-                {
-                    buildingPinYinInitTemp.Append(str[0]);
-                }
-                buildingPinYin = buildingPinYin + "|" + buildingPinYinInitTemp.ToString();
+            string chineseText = chineseFilter(text);
+            string buildingPinYin = null;
 
+            //如果有中文
+            if (chineseText.Length > 0)
+            {
+                buildingPinYin = PinyinHelper.GetPinyin(chineseText) + "|" + PinyinHelper.GetPinyinInitials(chineseText);
                 //去除拼音中的空格分隔，获取搜索输入
                 buildingPinYin = buildingPinYin.Replace(" ", "");
             }
             else
             {
-                //英文情况
+                //其他语言情况
                 buildingPinYin = text;
             }
             return buildingPinYin.ToLower();
+        }
+
+        ///<summary>
+        ///过滤非中文
+        ///</summary>
+        ///<param name="text">需要被过滤的文本</param>
+        ///<returns>返回string内的所有中文，如果没有中文的话会返回一个空string</returns>
+        private static string chineseFilter(string line)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (char ch in line)
+            {
+                if (PinyinHelper.IsChinese(ch))
+                {
+                    sb.Append(ch);
+                }
+            }
+            return sb.ToString();
+        }
+    }
+
+    public class pinYinDict
+    {
+        private static pinYinDict _PinYinDict;
+        public Dictionary<string, string[]> Dict = mapping();
+
+        private pinYinDict() { }
+
+        public static pinYinDict Instance
+        {
+            get
+            {
+                if (_PinYinDict == null)
+                {
+                    _PinYinDict = new pinYinDict();
+                }
+                return _PinYinDict;
+            }
         }
 
         ///<summary>
@@ -67,9 +96,10 @@ namespace PinYinSearch_ONI_MOD
         ///具体看generateBuildingDict.py
         ///</summary>
         ///<returns>返回的字典</returns>
-        public static Dictionary<string, string[]> creatPinYinDict()
+        public static Dictionary<string, string[]> mapping()
         {
             Dictionary<string, string[]> Dict = new Dictionary<string, string[]>();
+            //Debug.Log("[PinYinDev] Create Pinyin Dict");
 
             Dict.Add("气凝胶", new string[2] { "qiningjiao", "qnj" });
             Dict.Add("藻类", new string[2] { "zaolei", "zl" });

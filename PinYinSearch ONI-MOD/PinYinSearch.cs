@@ -24,7 +24,7 @@ namespace PinYinSearch
                     name = new SearchUtil.MatchCache
                     {
                         //这里是唯一变动的地方，其他都是科雷原版代码
-                        text = SearchUtil.Canonicalize(def.Name + pinYinDict.getPinYin(def.Name))
+                        text = SearchUtil.Canonicalize(def.Name + searchPinYin.getPinYin(def.Name))
                     },
                     desc = new SearchUtil.MatchCache
                     {
@@ -73,7 +73,7 @@ namespace PinYinSearch
         public static bool Prefix(SearchUtil.BuildingDefCache __instance, ref bool __result)
         {
             //科雷学之magic number
-            __result = __instance.Score >= 67;
+            __result = __instance.Score >= 60;
             return false;
         }
     }
@@ -100,7 +100,7 @@ namespace PinYinSearch
             foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
             {
                 string rowName = treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink();
-                rowName = rowName + "|" + pinYinDict.getPinYin(rowName);
+                rowName = rowName + "|" + searchPinYin.getPinYin(rowName);
                 //     在搜索类别里  || 配对元素名称
                 bool flag3 = flag2 || rowName.Contains(search.ToLower());
                 // 让这一个元素出现在行（Row）里
@@ -126,35 +126,28 @@ namespace PinYinSearch
 
         public static bool Prefix(ref bool __result, ref Tag tag, ref string filter)
         {
-            if (string.IsNullOrEmpty(filter))
+            //科雷这里用的是ToUpper()
+            //但我上面用的全部都是ToLower()
+            //还是和我自己保持一致的好
+            filter = filter.ToLower();
+
+            //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
+            Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
+            string textTemp = "";
+            if (m.Success)
             {
-                __result = false;
+                textTemp = m.Groups[1].Value;
             }
             else
             {
-                //科雷这里用的是ToUpper()
-                //但我上面用的全部都是ToLower()
-                //还是和我自己保持一致的好
-                filter = filter.ToLower();
-
-                //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
-                Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
-                string textTemp = "";
-                if (m.Success)
-                {
-                    textTemp = m.Groups[1].Value;
-                }
-                else
-                {
-                    textTemp = tag.ProperName();
-                }
-
-                //获取拼音
-                string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
-
-                //tag.Name返回的是元素的英文名，会弄乱搜索结果
-                __result = text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
+                textTemp = tag.ProperName();
             }
+
+            //获取拼音
+            string text = textTemp + "|" + searchPinYin.getPinYin(textTemp);
+
+            //tag.Name返回的是元素的英文名，会弄乱搜索结果
+            __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
 
             return false;
         }
@@ -180,7 +173,7 @@ namespace PinYinSearch
                 //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
                 string textTemp = tag.ProperNameStripLink();
                 //获取拼音
-                string text = textTemp + "|" + pinYinDict.getPinYin(textTemp);
+                string text = textTemp + "|" + searchPinYin.getPinYin(textTemp);
                 __result = text.Contains(search);
             }
             return false;
