@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using KMod;
+using HarmonyLib;
 using PinYinSearch_ONI_MOD;
 using ProcGen.Noise;
 using STRINGS;
@@ -10,6 +11,15 @@ using System.Text.RegularExpressions;
 
 namespace PinYinSearch
 {
+    public class PinYinSearchMod : UserMod2
+    {
+        public override void OnLoad(Harmony harmony)
+        {
+            base.OnLoad(harmony);
+            var preLoadDict = pinYinDict.InitializeDict();
+            Debug.Log("[PinYinSearch] 拼音搜索 Mod Loadad.");
+        }
+    }
 
     //建筑栏搜索功能
     [HarmonyPatch(typeof(SearchUtil), "MakeBuildingDefCache")]
@@ -17,22 +27,39 @@ namespace PinYinSearch
     {
         public static bool Prefix(SearchUtil.BuildingDefCache __instance, ref SearchUtil.BuildingDefCache __result, ref BuildingDef def)
         {
+            // 导入原版的SearchTerms
+            List<string> customSearchTerms = new List<string>();
+            if (def.SearchTerms != null)
+            {
+                customSearchTerms.AddRange(def.SearchTerms);
+            }
+            // 获取建筑名称的拼音，并添加到搜索词中
+            string[] pinyinParts = searchPinYin.getPinYin(def.Name).Split(' ');
+            foreach (string part in pinyinParts)
+            {
+                if (!string.IsNullOrEmpty(part))
+                {
+                    customSearchTerms.Add(SearchUtil.Canonicalize(part));
+                }
+            }
+
             SearchUtil.NameDescSearchTermsCache nameDescSearchTerms = new SearchUtil.NameDescSearchTermsCache
             {
                 nameDesc = new SearchUtil.NameDescCache
                 {
                     name = new SearchUtil.MatchCache
                     {
-                        //这里是唯一变动的地方，其他都是科雷原版代码
-                        text = SearchUtil.Canonicalize(def.Name + searchPinYin.getPinYin(def.Name))
+                        text = SearchUtil.Canonicalize(def.Name)
                     },
                     desc = new SearchUtil.MatchCache
                     {
                         text = SearchUtil.CanonicalizePhrase(def.Desc)
                     }
                 },
-                searchTerms = def.SearchTerms
+                // 新的searchTerms
+                searchTerms = customSearchTerms
             };
+            //Debug.Log("Building: " + def.Name + " |desc: "+ def.Desc + " |SearchTerms: " + string.Join(", ", customSearchTerms));
             SearchUtil.MatchCache effect = new SearchUtil.MatchCache
             {
                 text = SearchUtil.CanonicalizePhrase(def.Effect)
@@ -67,6 +94,20 @@ namespace PinYinSearch
     }
 
     //修改搜索评分threshold
+    [HarmonyPatch(typeof(SearchUtil.NameDescSearchTermsCache), "IsPassingScore")]
+    internal class changePassingScoreInSearchTerms
+    {
+        public static bool Prefix(SearchUtil.NameDescSearchTermsCache __instance,
+            ref bool __result)
+        {
+            //Debug.Log("Name: " + __instance.nameDesc.name + " |Score: " + __instance.Score);
+            //科雷学之magic number
+            __result = __instance.Score >= 60;
+            return false;
+        }
+    }
+
+    //修改搜索评分threshold
     [HarmonyPatch(typeof(SearchUtil.BuildingDefCache), "IsPassingScore")]
     internal class changePassingScore
     {
@@ -83,12 +124,13 @@ namespace PinYinSearch
     internal class ItemSearch
     {
 
-        public static bool Prefix(TreeFilterableSideScreenRow __instance, ref Tag thisCategoryTag, ref string search)
+        public static bool Prefix(
+            TreeFilterableSideScreenRow __instance,
+            ref Tag thisCategoryTag,
+            ref string search,
+            ref List<TreeFilterableSideScreenElement> ___rowElements,
+            ref MultiToggle ___arrowToggle)
         {
-
-            //获取两个private的变量
-            List<TreeFilterableSideScreenElement> rowElements = Traverse.Create(__instance).Field("rowElements").GetValue<List<TreeFilterableSideScreenElement>>();
-            MultiToggle arrowToggle = Traverse.Create(__instance).Field("arrowToggle").GetValue<MultiToggle>();
 
             //这科雷搜建筑用tolower()，搜元素用toupper()，不怕哪天儿给自己整个活儿吗？
             //搜索类别
@@ -97,10 +139,10 @@ namespace PinYinSearch
 
             //搜索元素
             search = search.ToUpper();
-            foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in rowElements)
+            foreach (TreeFilterableSideScreenElement treeFilterableSideScreenElement in ___rowElements)
             {
                 string rowName = treeFilterableSideScreenElement.GetElementTag().ProperNameStripLink();
-                rowName = rowName + "|" + searchPinYin.getPinYin(rowName);
+                rowName = rowName + " " + searchPinYin.getPinYin(rowName);
                 //     在搜索类别里  || 配对元素名称
                 bool flag3 = flag2 || rowName.Contains(search.ToLower());
                 // 让这一个元素出现在行（Row）里
@@ -109,7 +151,7 @@ namespace PinYinSearch
             }
             // 让这一行（Row）出现在菜单里
             __instance.gameObject.SetActive(flag);
-            if (search != "" && flag && arrowToggle.CurrentState == 0)
+            if (search != "" && flag && ___arrowToggle.CurrentState == 0)
             {
                 //展开这一行的所有内容
                 __instance.SetArrowToggleState(true);
@@ -131,20 +173,9 @@ namespace PinYinSearch
             //还是和我自己保持一致的好
             filter = filter.ToLower();
 
-            //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
-            Match m = Regex.Match(tag.ProperName(), "\\>(.*?)\\<", RegexOptions.IgnoreCase);
-            string textTemp = "";
-            if (m.Success)
-            {
-                textTemp = m.Groups[1].Value;
-            }
-            else
-            {
-                textTemp = tag.ProperName();
-            }
-
+            string textTemp = tag.ProperNameStripLink();
             //获取拼音
-            string text = textTemp + "|" + searchPinYin.getPinYin(textTemp);
+            string text = textTemp + " " + searchPinYin.getPinYin(textTemp);
 
             //tag.Name返回的是元素的英文名，会弄乱搜索结果
             __result = !(filter != "") || text.Contains(filter);// || tag.Name.ToLower().Contains(filter);
@@ -173,8 +204,30 @@ namespace PinYinSearch
                 //科雷在tag.ProperName()的返回值部分有<link>标签，需要移除标签
                 string textTemp = tag.ProperNameStripLink();
                 //获取拼音
-                string text = textTemp + "|" + searchPinYin.getPinYin(textTemp);
+                string text = textTemp + " " + searchPinYin.getPinYin(textTemp);
                 __result = text.Contains(search);
+            }
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(SingleItemSelectionSideScreenBase), "GetCategoryWithItem")]
+    internal class FilterSearch2
+    {
+
+        public static bool Prefix(SingleItemSelectionSideScreenBase __instance,
+            ref SingleItemSelectionSideScreenBase.Category __result,
+            ref Tag itemTag,
+            ref SortedDictionary<Tag, SingleItemSelectionSideScreenBase.Category> ___categories)
+        {
+            __result = null;
+            foreach (SingleItemSelectionSideScreenBase.Category category in ___categories.Values)
+            {
+                if (category.GetItem(itemTag) != null)
+                {
+                    __result = category;
+                    break;
+                }
             }
             return false;
         }
